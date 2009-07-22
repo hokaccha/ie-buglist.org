@@ -1,0 +1,17 @@
+@import "base.css";
+
+div.wrapper {
+    width: 900px;
+    margin: 0 auto;
+}
+
+div.header {
+    border-bottom: 3px solid #009;
+    padding: 20px;
+}
+
+div.header h1 {
+    font-size: 240%;
+    font-family: "Times New Roman",serif;
+    font-style: italic;
+}

@@ -1,0 +1,169 @@
+@charset "utf-8";
+
+/*==================================================
+
+Base Style Sheet
+
+1. body
+2. anchor
+3. text
+4. list
+5. table
+6. form
+7. object
+8. hack
+
+==================================================*/
+
+
+/*
+ 1. body
+---------------------------------*/
+
+body {
+    margin: 0;
+    padding: 0;
+    font-size: 15px;
+    line-height: 1.4;
+    color: #000;
+    font-family: verdana,Arial,sans-serif;
+}
+
+* html body {
+    font-size: 94%;
+}
+
+*:first-child+html body {
+    font-size: 94%;
+}
+
+/*
+ 2. anchor
+---------------------------------*/
+
+a {
+    color: #00F;
+}
+
+a:visited {
+    color: #808;
+}
+
+a:hover {
+    color: #C00;
+}
+
+
+/*
+ 3. text
+---------------------------------*/
+
+h1,h2,h3,h4,h5,h6,p {
+    margin: 0;
+    padding: 0;
+    font-size: 100%;
+}
+
+em {
+    font-style: normal;
+}
+
+address {
+    font-style: normal;
+}
+
+code {
+    zoom: normal; 
+}
+
+
+/*
+ 4. list
+---------------------------------*/
+
+ul,ol {
+    list-style: none;
+}
+
+ul,ol,li,dl,dt,dd {
+    margin: 0;
+    padding: 0;
+}
+
+/*
+ 5. table
+---------------------------------*/
+
+table {
+    border-collapse: collapse;
+    font-size: inherit;
+}
+
+table td,
+table th {
+    border: 1px solid #000;
+    padding: 5px;
+}
+
+table th {
+    background: #EEE;
+}
+
+
+/*
+ 6. form
+---------------------------------*/
+
+form {
+    margin: 0;
+    padding: 0;
+}
+
+fieldset {
+    border: none;
+    margin: 0;
+    padding: 0;
+}
+
+legend {
+    color: #000;
+}
+
+input,textarea {
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+input {
+    line-height: 1.2;
+}
+
+textarea {
+    padding: 0.2em;
+}
+
+
+/*
+ 7. object
+---------------------------------*/
+
+img {
+    border: none;
+    vertical-align: bottom;
+}
+
+object,embed {
+    vertical-align: bottom;
+}
+
+/*
+ 8. hack
+---------------------------------*/
+
+* {
+    zoom: 1;
+}
+
+*:first-child+html body, 
+*:first-child+html br { 
+    letter-spacing: 0; 
+}
