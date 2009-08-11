@@ -12,7 +12,6 @@ has file_ext => (
 has data_dir => (
     is      => 'rw',
     isa     => 'Str',
-    default => 'data',
 );
 
 no Mouse;

@@ -1,17 +1,79 @@
 @import "base.css";
 
+body {
+    color: #333;
+}
+
 div.wrapper {
     width: 900px;
     margin: 0 auto;
 }
 
 div.header {
-    border-bottom: 3px solid #009;
-    padding: 20px;
+    border-bottom: 5px solid #009;
+    padding: 10px 0;
 }
 
 div.header h1 {
-    font-size: 240%;
+    margin: 0;
+    font-size: 500%;
     font-family: "Times New Roman",serif;
     font-style: italic;
+    text-shadow: 5px 5px 5px #999;
+}
+
+div.header h1 a {
+    text-decoration: none;
+    color: #333;
+}
+
+div.footer {
+    text-align: right;
+    margin-top: 40px;
+    padding: 10px;
+    border-top: 2px solid #333;
+}
+
+div.main {
+    padding: 10px 0;
+}
+
+h2 {
+    font-size: 129%;
+    color: #600;
+    padding-top: 20px;
+    margin-bottom: 20px;
+}
+
+div.top h3 {
+    font-size: 115%;
+}
+
+div.top ul {
+    background: #EFEFEF;
+    border: 1px solid #CCC;
+    padding: 15px 10px 15px 35px;
+    margin-bottom: 40px;
+    border-radius: 10px;
+    -webkit-border-radius: 10px;
+    -moz-border-radius: 10px;
+    -opera-border-radius: 10px;
+}
+
+div.top ul li {
+    margin: 10px 0;
+}
+
+div.view h3 {
+    border-bottom: 2px solid #999;
+    padding: 5px;
+    margin: 40px 0 10px;
+
+border: 8px solid #000;
+-moz-border-bottom-colors: #555 #666 #777 #888 #999 #aaa #bbb #ccc;
+-moz-border-top-colors:    #555 #666 #777 #888 #999 #aaa #bbb #ccc;
+-moz-border-left-colors:   #555 #666 #777 #888 #999 #aaa #bbb #ccc;
+-moz-border-right-colors:  #555 #666 #777 #888 #999 #aaa #bbb #ccc;
+padding: 5px 5px 5px 10px;
+    
 }

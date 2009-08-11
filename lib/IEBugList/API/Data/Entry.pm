@@ -1,6 +1,9 @@
 package IEBugList::API::Data::Entry;
 use Mouse;
 
+use utf8;
+use Encode;
+
 use Path::Class qw/dir/;
 use Text::Markdown;
 
@@ -39,12 +42,13 @@ sub new_from_file {
     my ($self, @args) = @_;
     $self = $self->new(@args) unless ref $self;
 
-    my $fh = dir($self->data_dir)->file($self->file_name)->open('r') or return;
-    chomp(my $title = <$fh>);
-    chomp(my $body = join '', <$fh>);
+    my @file = dir($self->data_dir)->file($self->file_name)->slurp or return;
 
-    $self->title($title);
-    $self->body($self->markdown->markdown($body));
+    chomp(my $title = shift @file);
+    chomp(my $body = join '', @file);
+
+    $self->title(Encode::decode('utf8', $title));
+    $self->body($self->markdown->markdown(Encode::decode('utf8', $body)));
 
     $self;
 }

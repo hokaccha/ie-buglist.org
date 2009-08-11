@@ -14,5 +14,5 @@
 <div class="wrapper">
 
 <div class="header">
-    <h1>ie-buglist.org</h1>
+    <h1><a href="/">ie-buglist.org</a></h1>
 </div>

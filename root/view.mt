@@ -1,6 +1,6 @@
 <%=r $self->render('inc/header') %>
 
-<div class="main">
+<div class="main view">
 
 <h2><%=r $s->{title} %></h2>
 

@@ -11,9 +11,6 @@ my $entry = IEBugList::API::Data::Entry->new_from_file(
     'file_name' => 'test.txt',
 );
 
-is($entry->title, 'テスト');
+is($entry->title, 'test');
 is($entry->body, '<p>test body</p>
-
-<p>てすと</p>
 '); 
-
