@@ -10,8 +10,17 @@ div.wrapper {
 }
 
 div.header {
-    border-bottom: 5px solid #009;
-    padding: 10px 0;
+    background: #EEE;
+    -webkit-border-radius: 30px;
+    -moz-border-radius: 30px;
+    -opera-border-radius: 30px;
+    border-radius: 30px;
+    padding: 70px 0 30px;
+    text-align: center;
+    position: relative;
+    top: -50px;
+    margin-bottom: -30px;
+    -webkit-box-shadow:5px 5px 8px #444;
 }
 
 div.header h1 {
@@ -19,12 +28,12 @@ div.header h1 {
     font-size: 500%;
     font-family: "Times New Roman",serif;
     font-style: italic;
-    text-shadow: 5px 5px 5px #999;
+    text-shadow: 4px 4px 7px #666;
 }
 
 div.header h1 a {
     text-decoration: none;
-    color: #333;
+    color: #222;
 }
 
 div.footer {
@@ -39,41 +48,28 @@ div.main {
 }
 
 h2 {
-    font-size: 129%;
+    font-size: 143%;
     color: #600;
     padding-top: 20px;
-    margin-bottom: 20px;
+    text-shadow: 2px 2px 4px #555;
 }
 
-div.top h3 {
+h3 {
+    margin: 40px 0 20px;
     font-size: 115%;
+    background: #EFEFEF;
+    color: #000;
+    border-bottom: 2px solid #999;
+    border-right: 2px solid #999;
+    padding: 10px;
+    -webkit-box-shadow:5px 5px 8px #444;
 }
 
 div.top ul {
-    background: #EFEFEF;
-    border: 1px solid #CCC;
     padding: 15px 10px 15px 35px;
     margin-bottom: 40px;
-    border-radius: 10px;
-    -webkit-border-radius: 10px;
-    -moz-border-radius: 10px;
-    -opera-border-radius: 10px;
 }
 
 div.top ul li {
     margin: 10px 0;
-}
-
-div.view h3 {
-    border-bottom: 2px solid #999;
-    padding: 5px;
-    margin: 40px 0 10px;
-
-border: 8px solid #000;
--moz-border-bottom-colors: #555 #666 #777 #888 #999 #aaa #bbb #ccc;
--moz-border-top-colors:    #555 #666 #777 #888 #999 #aaa #bbb #ccc;
--moz-border-left-colors:   #555 #666 #777 #888 #999 #aaa #bbb #ccc;
--moz-border-right-colors:  #555 #666 #777 #888 #999 #aaa #bbb #ccc;
-padding: 5px 5px 5px 10px;
-    
 }
