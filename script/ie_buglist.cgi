@@ -3,6 +3,7 @@
 use strict;
 use warnings;
 use FindBin::libs;
+use lib "$FindBin::Bin/../ark";
 use lib "$FindBin::Bin/../lib";
 use Cwd 'realpath';
 
