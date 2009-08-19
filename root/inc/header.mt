@@ -13,6 +13,10 @@
 
 <div class="wrapper">
 
-<div class="header">
+<div class="header"><div>
     <h1><a href="/">ie-buglist.org</a></h1>
-</div>
+    <ul class="gnavi">
+        <li><a href="/">Home</a></li>
+        <li><a href="/view/about">About</a></li>
+    </ul>
+</div></div>

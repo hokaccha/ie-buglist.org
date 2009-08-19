@@ -15,18 +15,51 @@ div.header {
     -webkit-box-shadow: 5px 5px 8px #444;
 }
 
+div.header div {
+    width: 900px;
+    position: relative;
+    margin: 0 auto;
+}
+
 div.header h1 {
     margin: 0;
     font-size: 500%;
     font-family: "Times New Roman",serif;
     font-style: italic;
-    width: 900px;
     padding: 30px 0;
-    margin: 0 auto;
 }
 
 div.header h1 a {
     text-decoration: none;
+    color: #FFF;
+}
+
+div.header ul.gnavi {
+    top: -10px;
+    right: 0;
+    margin: 0;
+    padding: 0;
+    position: absolute;
+}
+
+div.header ul.gnavi li {
+    float: left;
+    margin: 0 0 0 20px;
+    list-style: none;
+}
+
+div.header ul.gnavi li a {
+    padding: 15px 20px 10px;
+    background: #2e6ca1;
+    text-decoration: none;
+    display: block;
+    color: #FFF;
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+}
+
+div.header ul.gnavi li a:hover {
+    background: #9f4bff;
     color: #FFF;
 }
 
