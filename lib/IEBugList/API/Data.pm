@@ -6,7 +6,7 @@ use Mouse;
 has file_ext => (
     is      => 'rw',
     isa     => 'Str',
-    default => '.txt',
+    default => '.md',
 );
 
 has data_dir => (
