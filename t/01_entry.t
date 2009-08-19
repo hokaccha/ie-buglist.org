@@ -2,7 +2,6 @@ use Test::Base;
 plan 'no_plan';
 
 use FindBin;
-use lib "$FindBin::Bin/../ark";
 use lib "$FindBin::Bin/../lib";
 
 use Path::Class qw/dir file/;
