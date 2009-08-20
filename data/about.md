@@ -24,4 +24,4 @@ k.hokamura[at]gmail.com
 
 一緒にメンテナンスしてくれる人募集してます。githubで管理してるのでgitとmarkdownが使えればＯＫです。
 
-[http://github.com/hokaccha/meca/tree/master](http://github.com/hokaccha/meca/tree/master)
+[http://github.com/hokaccha/ie-buglist.org/tree/master](http://github.com/hokaccha/ie-buglist.org/tree/master)
