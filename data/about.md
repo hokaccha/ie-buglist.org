@@ -6,11 +6,13 @@ About
 
 まだ全然コンテンツできてないですけど頑張って書いていきます。元のバグリストにはない、IE7、IE8のバグやJavascriptのバグとかも扱いたいと思ってます。
 
-### つくった人
+### つくってる人
 
 hokaccha (Kazuhito Hokamura)
 
 k.hokamura[at]gmail.com
+
+[http://webtech-walker.com/](http://webtech-walker.com/)
 
 [http://twitter.com/hokaccha](http://twitter.com/hokaccha)
 
