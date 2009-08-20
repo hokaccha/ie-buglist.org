@@ -18,7 +18,7 @@ k.hokamura[at]gmail.com
 
 ### Arkについて
 
-このサイトは[Ark](http://opensource.kayac.com/ja/projects/ark/)というPerkのフレームワークでできてます。Arkはこういう小規模なCGIで動くサイトから大規模開発までサポートしています。興味がある人はぜひ[ドキュメント](http://opensource.kayac.com/ja/projects/ark/documents/)を読んでみて下さい。
+このサイトは[Ark](http://opensource.kayac.com/ja/projects/ark/)というPerlのフレームワークでできてます。Arkはこういう小規模なCGIで動くサイトから大規模開発までサポートしています。興味がある人はぜひ[ドキュメント](http://opensource.kayac.com/ja/projects/ark/documents/)を読んでみて下さい。
 
 ### メンテナー募集
 
