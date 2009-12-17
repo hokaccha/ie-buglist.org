@@ -1,9 +1,9 @@
-<%=r $self->render('inc/header') %>
+<%= $self->render('inc/header') %>
 
 <div class="main top">
 
-<%=r $stash->{body} %>
+<%= raw_string($stash->{body}) %>
 
 </div>
 
-<%=r $self->render('inc/footer') %>
+<%= $self->render('inc/footer') %>

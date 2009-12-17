@@ -1,11 +1,11 @@
-<%=r $self->render('inc/header') %>
+<%= $self->render('inc/header') %>
 
 <div class="main view">
 
-<h2><%=r $s->{title} %></h2>
+<h2><%= $s->{title} %></h2>
 
-<%=r $s->{body} %>
+<%= raw_string($s->{body}) %>
 
 </div>
 
-<%=r $self->render('inc/footer') %>
+<%= $self->render('inc/footer') %>
