@@ -1,26 +1,36 @@
 package Ark::Core;
-use Mouse;
+use Any::Moose;
 
 use Ark::Context;
 use Ark::Action;
 use Ark::ActionContainer;
 use Ark::Request;
 
+use Plack::Request;
+use Plack::Response;
+
+use Exporter::AutoClean;
 use Path::Class qw/file dir/;
 
-extends 'Mouse::Object', 'Class::Data::Inheritable';
+extends any_moose('::Object'), 'Class::Data::Inheritable';
 
-__PACKAGE__->mk_classdata($_) for qw/configdata plugins/;
+__PACKAGE__->mk_classdata($_)
+    for qw/context configdata plugins _class_stash external_model_class/;
 
 has handler => (
     is      => 'rw',
     isa     => 'CodeRef',
+    lazy    => 1,
     default => sub {
         my $self = shift;
+
         sub {
-            $self->handle_request(@_);
+            my $req = Plack::Request->new(shift);
+            my $res = $self->handle_request($req);
+            $res->finalize;
         };
     },
+    predicate => 'is_psgi',
 );
 
 has logger_class => (
@@ -38,7 +48,7 @@ has logger => (
         my $self  = shift;
         my $class = $self->logger_class;
         $self->ensure_class_loaded($class);
-        $class->new;
+        $class->new( log_level => $self->log_level );
     },
 );
 
@@ -46,20 +56,20 @@ has log_level => (
     is      => 'rw',
     isa     => 'Str',
     default => sub {
+        # XXX: how detect plackup -E env in application?
+        if ($INC{'Plack/Middleware/StackTrace.pm'}) {
+            $ENV{ARK_DEBUG} =1;
+        }
         $ENV{ARK_DEBUG} ? 'debug' : 'error';
     },
 );
 
-has log_levels => (
+has debug => (
     is      => 'rw',
-    isa     => 'HashRef',
+    isa     => 'Bool',
+    lazy    => 1,
     default => sub {
-        {   debug => 4,
-            info  => 3,
-            warn  => 2,
-            error => 1,
-            fatal => 0,
-        };
+        shift->log_level eq 'debug';
     },
 );
 
@@ -73,6 +83,16 @@ has actions => (
     is      => 'rw',
     isa     => 'HashRef',
     default => sub { {} },
+);
+
+has action_cache => (
+    is      => 'rw',
+    isa     => 'Object',
+    lazy    => 1,
+    default => sub {
+        my $self = shift;
+        $self->path_to('action.cache');
+    },
 );
 
 has dispatch_types => (
@@ -104,12 +124,7 @@ has context_class => (
             base => 'Ark::Context',
         );
     },
-);
-
-# current context
-has context => (
-    is       => 'rw',
-    isa      => 'Ark::Context',
+    predicate => 'context_class_detected',
 );
 
 has setup_finished => (
@@ -132,22 +147,23 @@ has lazy_roles => (
     default => sub { {} },
 );
 
-no Mouse;
+no Any::Moose;
 
 sub EXPORT {
     my ($class, $target) = @_;
 
-    {
-        no strict 'refs';
+    my $load_plugins = $class->can('load_plugins');
+    my $use_model    = $class->can('use_model');
+    my $config       = $class->can('config');
+    my $config_sub   = sub { $config->( $target, @_ ) };
 
-        *{"${target}::use_plugins"} = sub { $target->load_plugins(@_) };
-        *{"${target}::conf"}        = sub { $target->config(@_) };
-    }
-}
-
-sub debug {
-    my $self = shift;
-    !!( $self->log_levels->{ $self->log_level } >= $self->log_levels->{debug} );
+    Exporter::AutoClean->export(
+        $target,
+        use_plugins => sub { $load_plugins->( $target, @_ ) },
+        use_model   => sub { $use_model->( $target, @_ ) },
+        config      => $config_sub,
+        conf        => $config_sub, # backward compatibility
+    );
 }
 
 sub config {
@@ -176,21 +192,32 @@ sub class_wrapper {
 
     my $classname = "${pkg}::Ark::$args->{name}";
     return $classname
-        if Mouse::is_class_loaded($classname) && $classname->isa($args->{base});
+        if Any::Moose::is_class_loaded($classname) && $classname->isa($args->{base});
 
-    eval qq{
-        package ${classname};
-        use Mouse;
-        extends '$args->{base}';
-        1;
-    };
-    die $@ if $@;
-
-    for my $plugin (@{ $self->lazy_roles->{ $args->{name} } || [] }) {
-        $plugin->meta->apply( $classname->meta );
+    my $moose_class = any_moose;
+    {
+        local $@;
+        eval qq{
+            package ${classname};
+            use ${moose_class};
+            extends '$args->{base}';
+            1;
+        };
+        die $@ if $@;
     }
 
+    for my $plugin (@{ $self->lazy_roles->{ $args->{name} } || [] }) {
+        $plugin->meta->apply( $classname->meta )
+            unless $classname->meta->does_role( $plugin );
+    }
+    $classname->meta->make_immutable if $self->context_class_detected;
+
     $classname;
+}
+
+sub class_stash {
+    my $self = shift;
+    $self->_class_stash || $self->_class_stash({});
 }
 
 sub load_plugins {
@@ -235,7 +262,7 @@ sub setup_store {
 
     $self->setup unless $self->setup_finished;
 
-    my $cache = $self->path_to('action.cache');
+    my $cache = $self->action_cache or die q[action_cache does not specified];
     $self->ensure_class_loaded('Storable');
 
     my $used_dispatch_types
@@ -268,7 +295,7 @@ sub setup_store {
 sub setup_retrieve {
     my $self = shift;
 
-    my $cache = $self->path_to('action.cache');
+    my $cache = $self->action_cache or die q[action_cache does not specified];
     $self->ensure_class_loaded('Storable');
 
     my $state = eval { Storable::retrieve($cache) }
@@ -285,7 +312,7 @@ sub setup_retrieve {
 }
 
 sub setup_minimal {
-    my $self = shift;
+    my ($self, %option) = @_;
 
     $self->setup_debug_mode if $self->debug;
 
@@ -293,12 +320,16 @@ sub setup_minimal {
     $self->setup_plugins;
 
     # cache
+    $self->action_cache( $self->path_to($option{action_cache}) )
+        if $option{action_cache};
+
     $self->setup_retrieve;
     $self->setup_store unless $self->setup_finished;
 }
 
 sub setup_debug_mode {
     my $self = shift;
+    return if $self->context_class->meta->does_role('Ark::Context::Debug');
 
     $self->ensure_class_loaded('Ark::Context::Debug');
     Ark::Context::Debug->meta->apply( $self->context_class->meta );
@@ -334,24 +365,30 @@ sub setup_plugin {
 
     if (my $target_context = $plugin->plugin_context) {
         if ($target_context eq 'Core') {
-            $plugin->meta->apply( $self->meta );
+            $plugin->meta->apply( $self->meta )
+                unless $self->meta->does_role($plugin);
         }
         else {
             push @{ $self->lazy_roles->{ $target_context } }, $plugin;
         }
         return;
     }
-    $plugin->meta->apply( $self->context_class->meta );
+    $plugin->meta->apply( $self->context_class->meta )
+        unless $self->context_class->meta->does_role($plugin);
 }
 
 sub setup_plugins {
     my $self = shift;
+
+    $self->meta->make_mutable unless any_moose eq 'Mouse';
 
     for my $plugin (@{ $self->plugins || [] }) {
         $self->setup_plugin($plugin);
     }
 
     $self->setup_default_plugins;
+
+    $self->meta->make_immutable unless any_moose eq 'Mouse';
 }
 
 sub setup_default_plugins {
@@ -390,6 +427,7 @@ sub load_component {
     }
 
     $self->ensure_class_loaded($component) or return;
+    $component->isa('Ark::Component') or return;
 
     # merge config
     $component->config( $self->config->{ $component->component_name } );
@@ -425,6 +463,11 @@ sub controller {
 
 sub model {
     my ($self, $name) = @_;
+
+    if (my $class = $self->external_model_class) {
+        return @_ >= 2 ? $class->get($name) : $class;
+    }
+
     return unless $name;
     $self->component('Model::' . $name);
 }
@@ -433,6 +476,13 @@ sub view {
     my ($self, $name) = @_;
     return unless $name;
     $self->component('View::' . $name);
+}
+
+sub use_model {
+    my ($self, $model_class) = @_;
+    $self->ensure_class_loaded( $model_class );
+    $self->external_model_class( $model_class );
+    $model_class->initialize if $model_class->can('initialize');
 }
 
 sub register_actions {
@@ -501,11 +551,14 @@ sub parse_action_attrs {
 
 sub log {
     my $self = shift;
-    my ($type, $msg, @args) = @_;
-    return if !$self->log_levels->{$type} or
-        $self->log_levels->{$type} > $self->log_levels->{ $self->log_level };
 
-    $self->logger->log(@_);
+    unless (@_) {
+        return $self->logger;
+    }
+    else {
+        # keep backward compatibility
+        $self->logger->log(@_);
+    }
 }
 
 sub get_action {
@@ -544,7 +597,7 @@ sub get_containers {
 
 sub ensure_class_loaded {
     my ($self, $class) = @_;
-    Mouse::load_class($class) unless Mouse::is_class_loaded($class);
+    Any::Moose::load_class($class) unless Any::Moose::is_class_loaded($class);
 }
 
 sub path_to {
@@ -561,17 +614,24 @@ sub path_to {
 sub handle_request {
     my ($self, $req) = @_;
 
-    my $context = $self->context_class->new( app => $self, request => $req );
+    $req = Ark::Request->wrap($req);
 
+    my $context = $self->context_class->new( app => $self, request => $req );
     $self->context($context)->process;
+    $self->context(undef);
 
     if ( my $error = $context->error->[-1] ) {
         chomp $error;
         $self->log( error => 'Caught exception in engine "%s"', $error );
+
+        unless ($self->debug) {
+            my $res = $context->response;
+            $res->status(500);
+            $res->body('Internal Server Error');
+        }
     }
 
     return $context->response;
 }
 
-1;
-
+__PACKAGE__->meta->make_immutable;

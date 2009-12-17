@@ -1,32 +1,36 @@
 package Ark::Context;
-use Mouse;
-use Mouse::Util::TypeConstraints;
+use Any::Moose;
+use Any::Moose '::Util::TypeConstraints';
 
-use Ark::Request;
-use HTTP::Engine::Response;
 use Scalar::Util ();
+use Try::Tiny;
 
 our $DETACH = 'ARK_DETACH';
 
-coerce 'Ark::Request'
-    => from 'Object'
-    => via {
-        $_->isa('Ark::Request') ? $_ : Ark::Request->new(%$_);
-    };
+extends 'Ark::Component';
 
 has request => (
     is       => 'rw',
-    isa      => 'Ark::Request',
+    isa      => 'Object',
     required => 1,
-    coerce   => 1,
 );
 
 has response => (
     is      => 'rw',
-    isa     => 'HTTP::Engine::Response',
+    isa     => 'Plack::Response',
     lazy    => 1,
     default => sub {
-        HTTP::Engine::Response->new;
+        my $self = shift;
+
+        if ($self->app->is_psgi) {
+            my $res = Plack::Response->new;
+            $res->status(200);
+            $res->header( 'Content-Type' => 'text/html' );
+            return $res;
+        }
+        else {
+            return HTTP::Engine::Response->new;
+        }
     },
 );
 
@@ -65,6 +69,12 @@ has error => (
     default => sub { [] },
 );
 
+has detached => (
+    is      => 'rw',
+    isa     => 'Bool',
+    default => 0,
+);
+
 {   # alias
     no warnings 'once';
     *req = \&request;
@@ -92,12 +102,15 @@ sub prepare_action {
     my $self = shift;
     my $req  = $self->request;
 
-    my $vpath = $req->uri->rel->path;
-    $vpath =~ s!^\.\./[^/]+!!;                    # fix ../foo/path => /path
-    $vpath =~ s/^\.+//;                           # fix ./path => /path
-    $vpath = '/' . $vpath unless $vpath =~ m!^/!; # path should be / first
+    my @path = split /\//, $req->path;
+    unless ($self->app->is_psgi) { # HTTP::Engine is required this trick
+        my $vpath = $req->uri->rel->path;
+        $vpath =~ s!^\.\./[^/]+!!;                    # fix ../foo/path => /path
+        $vpath =~ s!^\./!!;                           # fix ./path => /path
+        $vpath = '/' . $vpath unless $vpath =~ m!^/!; # path should be / first
+        @path = split /\//, $vpath;
+    }
 
-    my @path = split /\//, $vpath;
     unshift @path, '' unless @path;
 
  DESCEND: while (@path) {
@@ -197,13 +210,19 @@ sub execute {
         as_string => "${class}->${method}"
     };
 
-    $self->execute_action($obj, $method, @args);
+    my $error;
+    try {
+        $self->execute_action($obj, $method, @args);
+    } catch {
+        $error = $_;
+    };
 
     pop @{ $self->stack };
 
-    if (my $error = $@) {
+    if ($error) {
         if ($error =~ /^${DETACH} at /) {
-            die $DETACH if ($self->depth > 1);
+            die $DETACH if ($self->depth >= 1);
+            $self->detached(1);
         }
         else {
             push @{ $self->error }, $error;
@@ -217,9 +236,8 @@ sub execute {
 sub execute_action {
     my ($self, $obj, $method, @args) = @_;
 
-    eval {
-        $self->state( $obj->$method($self, @args) );
-    };
+    my $state = $obj->$method($self, @args);
+    $self->state( defined $state ? $state : undef );
 }
 
 sub redirect {
@@ -260,5 +278,5 @@ sub finalize {
 sub finalize_headers {}
 sub finalize_body {}
 
-1;
+__PACKAGE__->meta->make_immutable;
 

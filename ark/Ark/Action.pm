@@ -1,5 +1,7 @@
 package Ark::Action;
-use Mouse;
+use Any::Moose;
+
+use Ark::Controller;
 
 has [qw/namespace reverse name/] => (
     is       => 'rw',
@@ -19,20 +21,31 @@ has controller => (
     required => 1,
 );
 
-no Mouse;
+has args => (
+    is      => 'rw',
+    isa     => 'Maybe[Int]',
+    lazy    => 1,
+    default => sub {
+        my $self = shift;
+        $self->attributes->{Args} ? $self->attributes->{Args}[0] : 0;
+    },
+);
+
+no Any::Moose;
 
 sub match {
     my ($self, $req) = @_;
 
-    return 1 unless exists $self->attributes->{Args};
+    my $args = $self->args;
 
-    my $args = $self->attributes->{Args}[0];
     return 1 unless defined($args) && length($args);
     return scalar( @{ $req->args } ) == $args;
 }
 
 sub dispatch {
     my ($self, $context, @args) = @_;
+
+    return if $context->detached;
 
     my $req = $context->request;
 
@@ -45,7 +58,7 @@ sub dispatch {
         $self->controller( $context->app->load_component($self->{controller}) );
     }
 
-    $context->execute( $self->controller, $self->name, @args );
+    $self->controller->ACTION( $self, @args );
 }
 
 sub dispatch_chain {
@@ -54,6 +67,8 @@ sub dispatch_chain {
     $self->dispatch_begin($context)
         and $self->dispatch_auto($context)
         and $self->dispatch($context);
+
+    $context->detached(0);
     $self->dispatch_end($context);
 }
 
@@ -88,5 +103,5 @@ sub dispatch_end {
     return !@{ $context->error };
 }
 
-1;
+__PACKAGE__->meta->make_immutable;
 

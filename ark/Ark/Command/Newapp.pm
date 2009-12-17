@@ -1,11 +1,13 @@
 package Ark::Command::Newapp;
-use Mouse;
+use Any::Moose;
 
 extends 'Ark::Command::Plugin';
 
 with 'Ark::Command::Interface::ModuleSetup';
 
-1;
+sub search_app {}
+
+__PACKAGE__->meta->make_immutable;
 
 __END__
 

@@ -1,5 +1,5 @@
 package Ark::Controller;
-use Mouse;
+use Any::Moose;
 
 extends 'Ark::Component', 'Class::Data::Inheritable';
 
@@ -22,7 +22,7 @@ has namespace => (
     },
 );
 
-no Mouse;
+no Any::Moose;
 
 sub MODIFY_CODE_ATTRIBUTES {
     my ($class, $code, @attrs) = @_;
@@ -30,6 +30,11 @@ sub MODIFY_CODE_ATTRIBUTES {
     $class->_attr_cache([ @{ $class->_attr_cache } ]);
     push @{ $class->_attr_cache }, [ $code, \@attrs ];
     return;
+}
+
+sub ACTION {
+    my ($self, $action, @args) = @_;
+    $self->context->execute( $self, $action->name, @args );
 }
 
 sub _parse_Path_attr {
@@ -119,4 +124,4 @@ sub _parse_PathPart_attr {
     return PathPart => $value;
 }
 
-1;
+__PACKAGE__->meta->make_immutable;

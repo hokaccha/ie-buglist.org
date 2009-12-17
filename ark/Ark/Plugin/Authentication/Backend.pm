@@ -3,7 +3,7 @@ use Ark 'Component';
 
 has user => (
     is      => 'rw',
-    isa     => 'Ark::Plugin::Authentication::User',
+    isa     => 'Maybe[Ark::Plugin::Authentication::User]',
     lazy    => 1,
     builder => 'restore_user',
 );
@@ -21,6 +21,7 @@ has realms => (
 
 sub persist_user {
     my ($self, $user) = @_;
+    $self->context->session->regenerate;
     $self->context->session->set( __user => $user->for_session );
 }
 

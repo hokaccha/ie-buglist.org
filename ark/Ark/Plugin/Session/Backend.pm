@@ -3,19 +3,19 @@ use Ark 'Component';
 
 has session_id => (
     is      => 'rw',
-    isa     => 'Str',
+    isa     => 'Maybe[Str]',
     lazy    => 1,
     builder => 'get_session_id',
 );
 
 has session_data => (
     is      => 'rw',
-    isa     => 'HashRef',
+    isa     => 'Maybe[HashRef]',
     lazy    => 1,
-    builder => sub {
+    default => sub {
         my $self = shift;
         return unless $self->session_id;
-        $self->get_session_data( 'session:' . $self->session_id );
+        $self->get_session_data( $self->session_id );
     },
 );
 
@@ -58,6 +58,20 @@ sub remove {
     delete $self->session_data->{ $key };
 }
 
+sub regenerate {
+    my ($self) = @_;
+
+    # ignore if session does not exists
+    return unless $self->session_id;
+
+    my $session_data = $self->session_data;
+    $self->remove_session_data($self->session_id);
+
+    $self->initialize_session_data;
+    $self->set_session_data($self->session_id => $session_data);
+    $self->session_data($session_data);
+}
+
 sub initialize_session_data {
     my $self = shift;
 
@@ -74,18 +88,13 @@ sub initialize_session_data {
         $digest = Digest::SHA1->new;
     }
 
-    $digest->reset;
     $digest->add( $uuid->create );
 
-    my $sid = $digest->hexdigest;
-
-    $digest->reset;
-
-    $self->set_session_id( $sid );
+    $self->set_session_id( $digest->hexdigest );
     $self->session_data({});
 }
 
-# Store
+# State
 sub get_session_id { }
 
 sub set_session_id {
@@ -106,7 +115,7 @@ sub finalize_session {
     my ($self, $res) = @_;
 
     if ($self->session_updated and my $sid = $self->session_id) {
-        $self->set_session_data( "session:${sid}", $self->session_data );
+        $self->set_session_data( $sid, $self->session_data );
     }
 }
 

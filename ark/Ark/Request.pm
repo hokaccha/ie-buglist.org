@@ -1,7 +1,7 @@
 package Ark::Request;
-use Mouse;
+use Any::Moose;
 
-extends 'HTTP::Engine::Request';
+use URI::WithBase;
 
 has action => (
     is  => 'rw',
@@ -34,7 +34,19 @@ has captures => (
     *args = \&arguments;
 }
 
-no Mouse;
+no Any::Moose;
+
+sub wrap {
+    my ($class, $req) = @_;
+
+    if ($req->isa('Plack::Request')) {
+        $class->meta->superclasses('Plack::Request');
+        return  $class->new( $req->env );
+    }
+    else {
+        die "Request class should be inheritance Plack::Request";
+    }
+}
 
 1;
 

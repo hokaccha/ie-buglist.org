@@ -1,5 +1,5 @@
 package Ark::DispatchType::Path;
-use Mouse;
+use Any::Moose;
 
 use URI;
 
@@ -18,7 +18,7 @@ has paths => (
 
 has list => (
     is      => 'rw',
-    isa     => 'Text::SimpleTable | Undef',
+    isa     => 'Maybe[Object]',
     lazy    => 1,
     default => sub {
         my $self = shift;
@@ -36,7 +36,7 @@ has list => (
     },
 );
 
-no Mouse;
+no Any::Moose;
 
 sub match {
     my ($self, $req, $path) = @_;
@@ -70,7 +70,26 @@ sub register_path {
     $path = '/' unless length $path;
     $path = URI->new($path)->canonical;
 
-    unshift @{ $self->paths->{$path} ||= [] }, $action;
+    my $actions = $self->paths->{$path} ||= [];
+    my $args    = $action->args;
+
+    if (defined $args) {
+        my $p;
+        for (my $i = 0; $i <= $#$actions; $i++) {
+            last unless defined $actions->[$i]->args;
+            $p = $i if $actions->[$i]->args >= $args;
+        }
+
+        unless ($p) {
+            unshift @$actions, $action;
+        }
+        else {
+            @$actions = @$actions[0..$p-1], $action, @$actions[$p..$#$actions];
+        }
+    }
+    else {
+        push @$actions, $action;
+    }
 }
 
 sub used {
@@ -78,4 +97,4 @@ sub used {
     scalar( keys %{$self->paths} );
 }
 
-1;
+__PACKAGE__->meta->make_immutable;

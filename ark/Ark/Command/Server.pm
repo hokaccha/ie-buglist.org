@@ -1,15 +1,12 @@
 package Ark::Command::Server;
-use Mouse;
+use Any::Moose;
 
 with 'Ark::Command::Interface';
 
 use Cwd qw/cwd/;
 use Path::Class qw/dir/;
 
-use HTTP::Engine;
-use HTTP::Engine::Middleware;
-
-no Mouse;
+no Any::Moose;
 
 sub option_list {
     qw/help debug port=i address=s/
@@ -17,76 +14,10 @@ sub option_list {
 
 sub run {
     my ($self, @args) = @_;
-    $self->show_usage(0) if $self->options->{help};
-
-    my $libdir = dir(cwd)->subdir('lib');
-    $self->show_usage(-1, "There is no 'lib' directory in current directory")
-        unless -d $libdir;
-
-    eval "use lib q[$libdir]";
-    die $@ if $@;
-
-    my $extlib = $libdir->parent->subdir('extlib');
-    if (-d $extlib) {
-        eval "use lib q[$extlib]";
-    }
-
-    my $app_name = $args[0];
-    if ($app_name) {
-        eval "use $app_name";
-        if ($@) {
-            $self->show_usage(-1, qq[Can't find app: "$app_name"]);
-        }
-    }
-    else {
-        # search ark application
-        $libdir->recurse( callback => sub {
-            my $file = $_[0];
-            return if $app_name;
-            return unless -f $file && $file->basename =~ /\.pm$/;
-
-            (my $module = $file) =~ s!^$libdir/!!;
-            $module =~ s!/!::!g;
-            $module =~ s!\.pm$!!;
-
-            Mouse::load_class($module) unless Mouse::is_class_loaded($module);
-
-            return unless $module->can('meta')
-                and ref($module->meta) eq 'Mouse::Meta::Class';
-
-            my @super = $module->meta->superclasses;
-            $app_name = $module if grep /^Ark::Core$/, @super;
-        });
-
-        $self->show_usage(-1, qq[Error: Can't find ark application in 'lib' directory\n])
-            unless $app_name;
-    }
-
-    my $app = $app_name->new;
-    $app->log_level( $self->options->{debug} ? 'debug' : 'error' );
-    $app->setup;
-
-    my $mw = HTTP::Engine::Middleware->new;
-    $mw->install('HTTP::Engine::Middleware::Static' => {
-        docroot => $app->path_to('root'),
-        regexp => '/(?:(?:css|js|img|images?|swf|static|tmp|)/.*|[^/]+\.[^/]+)',
-#        regexp => qr!^/.*!,
-#        is_404_handler => 0, # this option requires HEM 0.14 or later
-    });
-
-    HTTP::Engine->new(
-        interface  => {
-            module => 'ServerSimple',
-            args   => {
-                host => $self->options->{address} || '0.0.0.0',
-                port => $self->options->{port}    || 4423,
-            },
-            request_handler => $mw->handler( $app->handler ),
-        },
-    )->run;
+    $self->show_usage(0);
 }
 
-1;
+__PACKAGE__->meta->make_immutable;
 
 __END__
 
@@ -96,15 +27,13 @@ Ark::Command::Server - ark.pl subcommand 'server'
 
 =head1 SYNOPSIS
 
- ark.pl server [options] [app name]
+This command has been DEPRECATED!
 
- Options:
-   -h --help    show this help
-   -d --debug   enable debug mode [default: off]
-   -p --port    specify port number to listen [default: 4423]
-   -a --address specify address to bind [default: 0.0.0.0]
+Use "plackup" command instead of this.
+See "perldoc plackup" for more info.
 
- If it is not passed [app name], try auto-detect.
+And though current version of Ark generate default app.psgi when "ark.pl newapp",
+if your application generated before it, you should make own app.psgi manually.
 
 =head1 AUTHOR
 
